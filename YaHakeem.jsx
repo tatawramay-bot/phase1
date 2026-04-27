@@ -1,186 +1,244 @@
-import React, { useState, useMemo } from "react";
-import { doctors } from "./data.js";
-import { specialties } from "./specialties.js";
+import { useState, useMemo } from "react";
 
-/* ─── Design tokens ───────────────────────────────────────────────────────── */
-const C = {
-  teal:      "#0f766e",
-  tealBg:    "#f0fdfa",
-  white:     "#ffffff",
-  bgSoft:    "#f8fafc",
-  bgPage:    "#f1f5f9",
-  border:    "rgba(15,23,42,0.10)",
-  borderMed: "rgba(15,23,42,0.18)",
-  text:      "#0f172a",
-  textMid:   "#475569",
-  textSoft:  "#94a3b8",
-  infoBg:    "#eff6ff",
-  infoText:  "#1d4ed8",
-  greenBg:   "#dcfce7",
-  greenText: "#15803d",
-};
+// ── Specialty data (26 entries) ──────────────────────────────────────────────
+const specialties = [
+  { id: 1, slug: "general-surgery", en: "General Surgery", ku: "نەشتەرگەری گشتی", icon: "⚕" },
+  { id: 2, slug: "anesthesia", en: "Anesthesia", ku: "بێهۆشکاری", icon: "💉" },
+  { id: 3, slug: "internal-medicine", en: "Internal Medicine", ku: "هەناوی", icon: "🩺" },
+  { id: 4, slug: "ob-gyn", en: "Obstetrics & Gynecology", ku: "ژنان و مناڵبوون", icon: "🤱" },
+  { id: 5, slug: "rheumatology", en: "Rheumatology", ku: "ڕۆماتیزمە", icon: "🦴" },
+  { id: 6, slug: "cardiology", en: "Cardiology & Catheterization", ku: "دڵ و قەستەرە", icon: "❤" },
+  { id: 7, slug: "urology", en: "Urology & Kidney Surgery", ku: "نەشتەرگەری میزەڕۆ و گورچیلە", icon: "🫘" },
+  { id: 8, slug: "eye-surgery", en: "Eye Surgery", ku: "نەشتەرگەری چاو", icon: "👁" },
+  { id: 9, slug: "dermatology", en: "Dermatology", ku: "پێست", icon: "✦" },
+  { id: 10, slug: "gp", en: "General Practitioner", ku: "پزیشکی گشتی", icon: "🩺" },
+  { id: 11, slug: "orthopedics-surgery", en: "Orthopedics (Bone & Fracture Surgery)", ku: "نەشتەرگەری ئێسک و شکاوی", icon: "🦷" },
+  { id: 12, slug: "ent", en: "ENT (Ear, Nose, Throat)", ku: "قوڕگ و لوت و گوێ", icon: "👂" },
+  { id: 13, slug: "pediatrics", en: "Pediatrics & Neonatology", ku: "مناڵان و تازە لەدایکبووان", icon: "👶" },
+  { id: 14, slug: "dentistry", en: "Dentistry", ku: "دەم و ددان", icon: "🦷" },
+  { id: 15, slug: "radiology", en: "Radiology & Ultrasound", ku: "تیشک و سۆنار", icon: "🩻" },
+  { id: 16, slug: "cosmetic", en: "Cosmetic & Aesthetic Medicine", ku: "جوانکاری", icon: "✨" },
+  { id: 17, slug: "orthopedics", en: "Orthopedics", ku: "ئێسک و شکاوی", icon: "🦴" },
+  { id: 18, slug: "neurology", en: "Neurology & Neurosurgery", ku: "مێشک و دەمار", icon: "🧠" },
+  { id: 19, slug: "chest", en: "Chest, Cardiology & Hematology", ku: "سنگ و دڵ و بۆرییەکانی خوێن", icon: "🫁" },
+  { id: 20, slug: "neurosurgery", en: "Neurosurgery", ku: "نەشتەرگەری مێشک و دەمار", icon: "🧠" },
+  { id: 21, slug: "breast", en: "Breast Diseases", ku: "نەخۆشییەکانی مەمک", icon: "🩷" },
+  { id: 22, slug: "urology-kidney", en: "Urology & Kidney", ku: "میزەڕۆ و گورچیلە", icon: "🫘" },
+  { id: 23, slug: "gastro", en: "Gastroenterology", ku: "هەناوی پسپۆڕ", icon: "🫃" },
+  { id: 24, slug: "psychiatry", en: "Psychiatry", ku: "دەروونی", icon: "🧩" },
+  { id: 25, slug: "physio", en: "Physical Therapy", ku: "چارەسەری فیزیایی", icon: "🏋" },
+  { id: 26, slug: "nutrition", en: "Nutrition & Growth", ku: "خۆراک و گەشە", icon: "🥗" },
+];
 
-/* ─── Translations ────────────────────────────────────────────────────────── */
-const T = {
+// ── Sample doctor data (first 12 for preview) ───────────────────────────────
+const doctors = [
+  { id: 1, name: "د. هەردی کەریم سەنگاوی", specialty_ku: "نەشتەرگەری گشتی", specialty_en: "General Surgery", clinic: "نەخۆشخانەی چەمچەماڵی تایبەت", city: "چەمچەماڵ", phone: "7702281000", fee: null, qualifications: null, kcs: 72 },
+  { id: 2, name: "د. هەردی محمد ظاهر", specialty_ku: "نەشتەرگەری گشتی", specialty_en: "General Surgery", clinic: "نەخۆشخانەی چەمچەماڵی تایبەت", city: "چەمچەماڵ", phone: "7724804343", fee: null, qualifications: null, kcs: 45 },
+  { id: 3, name: "د. هەڵۆ ئەحمەد", specialty_ku: "بێهۆشکاری", specialty_en: "Anesthesia", clinic: "نەخۆشخانەی چەمچەماڵی تایبەت", city: "چەمچەماڵ", phone: "7730672797", fee: null, qualifications: null, kcs: 88 },
+  { id: 4, name: "د. جەمال ئەنوەر ئەحمەد", specialty_ku: "هەناوی", specialty_en: "Internal Medicine", clinic: "نەخۆشخانەی چەمچەماڵی تایبەت", city: "چەمچەماڵ", phone: "7707672797", fee: null, qualifications: null, kcs: 61 },
+  { id: 5, name: "د. شۆخان فرحان ئەحمەد", specialty_ku: "ژنان و مناڵبوون", specialty_en: "Obstetrics & Gynecology", clinic: "کۆمەڵگەی پزیشکی بەخشین", city: "چەمچەماڵ", phone: "7702256518", fee: "٣٠٠٠ دینار", qualifications: "دکتۆرا (بۆرد) لە نەخۆشییەکانی ژنان و مناڵبوون", kcs: 93 },
+  { id: 6, name: "د. هێمن ئەسعەد عوسمان", specialty_ku: "ڕۆماتیزمە", specialty_en: "Rheumatology", clinic: "کۆمەڵگەی پزیشکی بەخشین", city: "چەمچەماڵ", phone: "7714841616", fee: "٣٠٠٠ دینار", qualifications: null, kcs: 57 },
+  { id: 7, name: "د. ڕێباز ئیبراهیم ئەحمەد", specialty_ku: "نەشتەرگەری میزەڕۆ و گورچیلە", specialty_en: "Urology & Kidney Surgery", clinic: "کۆمەڵگەی پزیشکی بەخشین", city: "چەمچەماڵ", phone: "07714843535", fee: "٣٠٠٠ دینار", qualifications: "دکتۆرا (بۆرد) لە نەشتەرگەری گورچیلە و میزەڕۆ", kcs: 81 },
+  { id: 8, name: "د. محمود ئازاد محمد", specialty_ku: "نەشتەرگەری چاو", specialty_en: "Eye Surgery", clinic: "کۆمەڵگەی پزیشکی بەخشین", city: "چەمچەماڵ", phone: "7701979990", fee: "٣٠٠٠ دینار", qualifications: null, kcs: 34 },
+  { id: 9, name: "د. هیوا عومەر حسن", specialty_ku: "پێست", specialty_en: "Dermatology", clinic: "کۆمەڵگەی پزیشکی بەخشین", city: "چەمچەماڵ", phone: "7714841818", fee: "٣٠٠٠ دینار", qualifications: null, kcs: 66 },
+  { id: 10, name: "د. ئیمداد ئەحمەد محمد", specialty_ku: "پزیشکی گشتی", specialty_en: "General Practitioner", clinic: "کۆمەڵگەی پزیشکی بەخشین", city: "چەمچەماڵ", phone: "07714841717", fee: "٣٠٠٠ دینار", qualifications: null, kcs: 22 },
+  { id: 11, name: "د. هێرش سەیدگوڵ", specialty_ku: "قوڕگ و لوت و گوێ", specialty_en: "ENT (Ear, Nose, Throat)", clinic: "کۆمەڵگەی پزیشکی بەخشین", city: "چەمچەماڵ", phone: "7701388576", fee: "٣٠٠٠ دینار", qualifications: null, kcs: 49 },
+  { id: 12, name: "د. شنیار محمد شێخانی", specialty_ku: "ژنان و مناڵبوون", specialty_en: "Obstetrics & Gynecology", clinic: "تەلاری پزیشکی هێدی", city: "هەڵەبجەی شەهید", phone: "7501637057", fee: null, qualifications: null, kcs: 77 },
+];
+
+const clinics = [...new Set(doctors.map((d) => d.clinic))];
+
+// ── UI string translations ────────────────────────────────────────────────────
+const t = {
   en: {
-    brand:"Ya Hakeem", tag:"Medical Directory",
-    search:"Search doctors, specialties, clinics…",
-    specialties:"Specialties", clinics:"Clinics",
-    allSpec:"All Specialties", allClin:"All Clinics",
-    doctor:"Doctor", specialty:"Specialty", city:"City", kcs:"KCS",
-    phone:"Phone", fee:"Fee", qual:"Qualifications", na:"N/A",
-    toggle:"کوردی", filter:"Filter", docs:"doctors", noResults:"No results found.",
+    brand: "Ya Hakeem",
+    tagline: "Medical Directory",
+    search: "Search doctors, specialties…",
+    specialties: "Specialties",
+    clinics: "Clinics",
+    allSpecialties: "All Specialties",
+    allClinics: "All Clinics",
+    doctor: "Doctor",
+    specialty: "Specialty",
+    clinic: "Clinic",
+    city: "City",
+    phone: "Phone",
+    fee: "Fee",
+    qualifications: "Qualifications",
+    notAvailable: "N/A",
+    doctors: "Doctors",
+    results: "results",
+    toggleLang: "کوردی",
+    menu: "Menu",
+    kcs: "KCS",
   },
   ku: {
-    brand:"یا حەکیم", tag:"ڕێنمایی پزیشکی",
-    search:"گەڕان بۆ پزیشک، پسپۆڕی، کلینیک…",
-    specialties:"پسپۆڕییەکان", clinics:"کلینیکەکان",
-    allSpec:"هەموو پسپۆڕییەکان", allClin:"هەموو کلینیکەکان",
-    doctor:"پزیشک", specialty:"پسپۆڕی", city:"شار", kcs:"نمرەی بەشداری",
-    phone:"تەلەفۆن", fee:"نرخ", qual:"بروانامە", na:"نەدیاری",
-    toggle:"English", filter:"فلتەر", docs:"پزیشک", noResults:"هیچ ئەنجامێک نەدۆزرایەوە.",
+    brand: "یا حەکیم",
+    tagline: "ڕێنمایی پزیشکی",
+    search: "گەڕان بۆ پزیشک، پسپۆڕی…",
+    specialties: "پسپۆڕییەکان",
+    clinics: "کلینیکەکان",
+    allSpecialties: "هەموو پسپۆڕییەکان",
+    allClinics: "هەموو کلینیکەکان",
+    doctor: "پزیشک",
+    specialty: "پسپۆڕی",
+    clinic: "کلینیک",
+    city: "شار",
+    phone: "ژمارەی تەلەفۆن",
+    fee: "نرخی وریاری",
+    qualifications: "بروانامە",
+    notAvailable: "نەدیاری",
+    doctors: "پزیشک",
+    results: "ئەنجام",
+    toggleLang: "English",
+    menu: "مێنیو",
+    kcs: "نمرەی بەشداری",
   },
 };
 
-/* ─── Helpers ─────────────────────────────────────────────────────────────── */
-function getInitials(name) {
-  return name.replace(/^(د\.|دکتۆر[ە]?\s*)/, "").trim()
-    .split(" ").slice(0, 2).map(w => w[0] || "").join("");
-}
-const AVATAR_PALETTES = [
-  ["#dbeafe","#1e40af"],["#fce7f3","#9d174d"],["#dcfce7","#166534"],
-  ["#fef3c7","#92400e"],["#ede9fe","#5b21b6"],["#ffedd5","#9a3412"],
-];
-const avatarPalette = id => AVATAR_PALETTES[id % AVATAR_PALETTES.length];
-
-/* ─── KCS badge ───────────────────────────────────────────────────────────── */
+// ── KCS Badge ─────────────────────────────────────────────────────────────────
 function KcsBadge({ score }) {
-  const [bg, fg] = score >= 80 ? [C.greenBg, C.greenText]
-    : score >= 50 ? [C.infoBg, C.infoText]
-    : ["#f1f5f9", C.textSoft];
+  const color =
+    score >= 80 ? "#059669" : score >= 50 ? "#0284c7" : "#94a3b8";
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", gap:2,
-      fontSize:11, fontWeight:700, color:fg, background:bg,
-      borderRadius:4, padding:"2px 6px", letterSpacing:"0.02em",
-    }}>★ {score}</span>
-  );
-}
-
-/* ─── Sidebar group ───────────────────────────────────────────────────────── */
-function SideGroup({ label, children }) {
-  const [open, setOpen] = useState(true);
-  return (
-    <div style={{ marginBottom:2 }}>
-      <button onClick={() => setOpen(p => !p)} style={{
-        width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center",
-        padding:"6px 14px", background:"none", border:"none", cursor:"pointer",
-        fontSize:10, fontWeight:700, letterSpacing:"0.08em",
-        textTransform:"uppercase", color:C.textSoft,
-      }}>
-        {label}
-        <span style={{ fontSize:9 }}>{open ? "▴" : "▾"}</span>
-      </button>
-      {open && children}
-    </div>
-  );
-}
-
-/* ─── Sidebar button ──────────────────────────────────────────────────────── */
-function SBtn({ label, active, rtl, onClick }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <button onClick={onClick} title={label}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+    <span
       style={{
-        display:"block", width:"100%", textAlign: rtl ? "right" : "left",
-        padding:"5px 14px", fontSize:12.5,
-        border:"none", borderRadius:5, cursor:"pointer",
-        color: active ? C.infoText : C.text,
-        background: active ? C.infoBg : hover ? C.bgSoft : "none",
-        fontWeight: active ? 600 : 400,
-        whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
-        transition:"background 0.1s, color 0.1s",
-      }}>
-      {label}
-    </button>
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 3,
+        fontSize: 11,
+        fontWeight: 500,
+        color,
+        background: color + "18",
+        borderRadius: 4,
+        padding: "1px 6px",
+      }}
+    >
+      ★ {score}
+    </span>
   );
 }
 
-/* ─── Doctor row ──────────────────────────────────────────────────────────── */
-function DocRow({ doc, lang, s, rtl }) {
+// ── Doctor Row ────────────────────────────────────────────────────────────────
+function DoctorRow({ doctor, lang, strings, isRtl }) {
   const [open, setOpen] = useState(false);
-  const [hover, setHover] = useState(false);
-  const specLabel = lang === "ku" ? doc.specialty_ku : (doc.specialty_en || doc.specialty_ku);
-  const [avatarBg, avatarFg] = avatarPalette(doc.id);
+  const specialtyLabel = lang === "ku" ? doctor.specialty_ku : (doctor.specialty_en || doctor.specialty_ku);
+  const initials = doctor.name.replace(/^(د\.|دکتۆر[ە]?\s*)/, "").trim().split(" ").slice(0, 2).map((w) => w[0]).join("");
 
   return (
     <div
-      onClick={() => setOpen(p => !p)}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       style={{
-        borderBottom:`1px solid ${C.border}`, cursor:"pointer",
-        background: open ? C.bgSoft : hover ? "#fafcff" : C.white,
-        transition:"background 0.12s",
+        borderBottom: "0.5px solid var(--color-border-tertiary)",
+        cursor: "pointer",
+        background: open ? "var(--color-background-secondary)" : "transparent",
+        transition: "background 0.15s",
       }}
+      onClick={() => setOpen((p) => !p)}
     >
-      <div style={{
-        display:"grid",
-        gridTemplateColumns: rtl ? "56px 100px 160px 1fr 36px" : "36px 1fr 160px 100px 56px",
-        gap:12, padding:"10px 16px", alignItems:"center",
-      }}>
-        {rtl ? (
-          <>
-            <KcsBadge score={doc.kcs} />
-            <div style={{ fontSize:12.5, color:C.textMid, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{doc.city}</div>
-            <div style={{ fontSize:12.5, color:C.textMid, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{specLabel}</div>
-            <div style={{ minWidth:0 }}>
-              <div style={{ fontSize:13.5, fontWeight:600, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{doc.name}</div>
-              <div style={{ fontSize:11.5, color:C.textSoft, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginTop:1 }}>{doc.clinic}</div>
-            </div>
-            <div style={{ width:32, height:32, borderRadius:"50%", background:avatarBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:avatarFg, flexShrink:0 }}>
-              {getInitials(doc.name)}
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ width:32, height:32, borderRadius:"50%", background:avatarBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:avatarFg, flexShrink:0 }}>
-              {getInitials(doc.name)}
-            </div>
-            <div style={{ minWidth:0 }}>
-              <div style={{ fontSize:13.5, fontWeight:600, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{doc.name}</div>
-              <div style={{ fontSize:11.5, color:C.textSoft, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginTop:1 }}>{doc.clinic}</div>
-            </div>
-            <div style={{ fontSize:12.5, color:C.textMid, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{specLabel}</div>
-            <div style={{ fontSize:12.5, color:C.textMid, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{doc.city}</div>
-            <KcsBadge score={doc.kcs} />
-          </>
-        )}
+      {/* Main row */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "40px 1fr 160px 120px 60px",
+          gap: 12,
+          padding: "10px 16px",
+          alignItems: "center",
+        }}
+      >
+        {/* Avatar */}
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "var(--color-background-info)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 12,
+            fontWeight: 500,
+            color: "var(--color-text-info)",
+            flexShrink: 0,
+          }}
+        >
+          {initials}
+        </div>
+        {/* Name + clinic */}
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--color-text-primary)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {doctor.name}
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--color-text-secondary)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {doctor.clinic}
+          </div>
+        </div>
+        {/* Specialty */}
+        <div
+          style={{
+            fontSize: 12,
+            color: "var(--color-text-secondary)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {specialtyLabel}
+        </div>
+        {/* City */}
+        <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+          {doctor.city}
+        </div>
+        {/* KCS */}
+        <div>
+          <KcsBadge score={doctor.kcs} />
+        </div>
       </div>
 
+      {/* Expanded detail */}
       {open && (
-        <div style={{
-          padding:"4px 16px 14px",
-          display:"grid", gridTemplateColumns:"1fr 1fr 1fr",
-          gap:"4px 24px", fontSize:12.5,
-          borderTop:`1px solid ${C.border}`,
-        }}>
-          <div style={{ paddingTop:8 }}>
-            <span style={{ color:C.textSoft, marginInlineEnd:4 }}>{s.phone}:</span>
-            <a href={`tel:${doc.phone}`} onClick={e => e.stopPropagation()}
-              style={{ color:C.infoText, textDecoration:"none" }}>
-              {doc.phone || s.na}
+        <div
+          style={{
+            padding: "0 16px 14px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "8px 24px",
+            fontSize: 13,
+          }}
+        >
+          <div>
+            <span style={{ color: "var(--color-text-secondary)" }}>{strings.phone}: </span>
+            <a
+              href={`tel:${doctor.phone}`}
+              style={{ color: "var(--color-text-info)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {doctor.phone || strings.notAvailable}
             </a>
           </div>
-          <div style={{ paddingTop:8 }}>
-            <span style={{ color:C.textSoft, marginInlineEnd:4 }}>{s.fee}:</span>
-            <span style={{ color:C.text }}>{doc.fee || s.na}</span>
+          <div>
+            <span style={{ color: "var(--color-text-secondary)" }}>{strings.fee}: </span>
+            <span>{doctor.fee || strings.notAvailable}</span>
           </div>
-          <div style={{ paddingTop:8 }}>
-            <span style={{ color:C.textSoft, marginInlineEnd:4 }}>{s.qual}:</span>
-            <span style={{ color:C.text }}>{doc.qualifications || s.na}</span>
+          <div>
+            <span style={{ color: "var(--color-text-secondary)" }}>{strings.qualifications}: </span>
+            <span>{doctor.qualifications || strings.notAvailable}</span>
           </div>
         </div>
       )}
@@ -188,207 +246,397 @@ function DocRow({ doc, lang, s, rtl }) {
   );
 }
 
-/* ─── App ─────────────────────────────────────────────────────────────────── */
-export default function YaHakeem() {
-  const [lang, setLang]         = useState("en");
-  const [search, setSearch]     = useState("");
-  const [activeSp, setActiveSp] = useState(null);
-  const [activeClin, setActiveClin] = useState(null);
-  const [sideOpen, setSideOpen] = useState(true);
-
-  const s   = T[lang];
-  const rtl = lang === "ku";
-
-  const clinics = useMemo(() =>
-    [...new Set(doctors.map(d => d.clinic).filter(Boolean))], []);
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return doctors.filter(d => {
-      const mq = !q || d.name.includes(q)
-        || d.specialty_ku.includes(q)
-        || (d.specialty_en && d.specialty_en.toLowerCase().includes(q))
-        || d.clinic.includes(q) || d.city.includes(q);
-      const msp = !activeSp   || d.specialty_ku === activeSp;
-      const mc  = !activeClin || d.clinic === activeClin;
-      return mq && msp && mc;
-    });
-  }, [search, activeSp, activeClin]);
-
+// ── Collapsible Sidebar Section ───────────────────────────────────────────────
+function SidebarGroup({ title, children }) {
+  const [open, setOpen] = useState(true);
   return (
-    <div dir={rtl ? "rtl" : "ltr"} style={{
-      display:"flex", flexDirection:"column", height:"100vh",
-      fontFamily:"'Segoe UI', Tahoma, system-ui, sans-serif",
-      background:C.bgPage, color:C.text,
-    }}>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0}
-        body,#root{height:100vh;overflow:hidden}
-        ::-webkit-scrollbar{width:5px}
-        ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
-        [dir="rtl"]{font-family:'Noto Sans Arabic','Segoe UI',sans-serif}
-      `}</style>
-
-      {/* Navbar */}
-      <header style={{
-        display:"flex", alignItems:"center", gap:10,
-        padding:"0 16px", height:52, flexShrink:0,
-        background:C.white, borderBottom:`1px solid ${C.border}`,
-        boxShadow:"0 1px 4px rgba(0,0,0,0.07)", zIndex:30,
-      }}>
-        {/* Hamburger */}
-        <button onClick={() => setSideOpen(p => !p)} style={{
-          display:"flex", flexDirection:"column", gap:4,
-          background:"none", border:"none", cursor:"pointer", padding:5,
-        }}>
-          {[0,1,2].map(i => (
-            <span key={i} style={{ display:"block", width:18, height:1.5, background:C.textMid, borderRadius:2 }} />
-          ))}
-        </button>
-
-        {/* Brand */}
-        <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-          <div style={{
-            width:28, height:28, borderRadius:7, background:C.teal,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:13, color:"#fff", fontWeight:700,
-          }}>✦</div>
-          <span style={{ fontSize:17, fontWeight:700, color:C.teal, letterSpacing:"-0.02em" }}>
-            {s.brand}
-          </span>
-          <span style={{ fontSize:10, color:C.textSoft, letterSpacing:"0.06em", textTransform:"uppercase" }}>
-            {s.tag}
-          </span>
-        </div>
-
-        {/* Search */}
-        <div style={{ flex:1, maxWidth:440, margin:"0 10px" }}>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={s.search}
-            dir={rtl ? "rtl" : "ltr"}
-            style={{
-              width:"100%", height:33,
-              padding: rtl ? "0 12px 0 10px" : "0 10px 0 12px",
-              fontSize:13, border:`1px solid ${C.border}`,
-              borderRadius:8, background:C.bgSoft,
-              color:C.text, outline:"none",
-            }}
-            onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealBg}`; }}
-            onBlur={e =>  { e.target.style.borderColor = C.border; e.target.style.boxShadow = "none"; }}
-          />
-        </div>
-
-        {/* Count */}
-        <span style={{
-          fontSize:12, color:C.textSoft, whiteSpace:"nowrap",
-          background:C.bgSoft, border:`1px solid ${C.border}`,
-          borderRadius:6, padding:"3px 9px",
-        }}>
-          {filtered.length} {s.docs}
-        </span>
-
-        {/* Lang toggle */}
-        <LangBtn label={s.toggle} onClick={() => setLang(l => l === "en" ? "ku" : "en")} />
-      </header>
-
-      {/* Body */}
-      <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
-
-        {/* Sidebar */}
-        <aside style={{
-          width: sideOpen ? 220 : 0, flexShrink:0, overflow:"hidden",
-          background:C.white,
-          borderRight: rtl ? "none" : `1px solid ${C.border}`,
-          borderLeft:  rtl ? `1px solid ${C.border}` : "none",
-          display:"flex", flexDirection:"column",
-          transition:"width 0.22s ease",
-        }}>
-          <div style={{ width:220, display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
-            <div style={{
-              padding:"10px 14px 8px", fontSize:10, fontWeight:700,
-              letterSpacing:"0.08em", textTransform:"uppercase",
-              color:C.textSoft, borderBottom:`1px solid ${C.border}`, flexShrink:0,
-            }}>{s.filter}</div>
-
-            <div style={{ overflowY:"auto", flex:1, paddingBottom:16, paddingTop:6 }}>
-              <SideGroup label={s.specialties}>
-                <SBtn label={s.allSpec} active={!activeSp} rtl={rtl} onClick={() => setActiveSp(null)} />
-                {specialties.map(sp => (
-                  <SBtn key={sp.id}
-                    label={lang === "ku" ? sp.ku : sp.en}
-                    active={activeSp === sp.ku} rtl={rtl}
-                    onClick={() => setActiveSp(activeSp === sp.ku ? null : sp.ku)}
-                  />
-                ))}
-              </SideGroup>
-
-              <div style={{ height:1, background:C.border, margin:"6px 14px" }} />
-
-              <SideGroup label={s.clinics}>
-                <SBtn label={s.allClin} active={!activeClin} rtl={rtl} onClick={() => setActiveClin(null)} />
-                {clinics.map(c => (
-                  <SBtn key={c} label={c} active={activeClin === c} rtl={rtl}
-                    onClick={() => setActiveClin(activeClin === c ? null : c)} />
-                ))}
-              </SideGroup>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main */}
-        <main style={{ flex:1, overflowY:"auto", background:C.white }}>
-          {/* Table header */}
-          <div style={{
-            display:"grid",
-            gridTemplateColumns: rtl ? "56px 100px 160px 1fr 36px" : "36px 1fr 160px 100px 56px",
-            gap:12, padding:"8px 16px",
-            fontSize:10, fontWeight:700, color:C.textSoft,
-            textTransform:"uppercase", letterSpacing:"0.07em",
-            borderBottom:`1px solid ${C.border}`,
-            background:C.bgSoft, position:"sticky", top:0, zIndex:5,
-          }}>
-            {rtl ? (
-              <><div>{s.kcs}</div><div>{s.city}</div><div>{s.specialty}</div><div>{s.doctor}</div><div /></>
-            ) : (
-              <><div /><div>{s.doctor}</div><div>{s.specialty}</div><div>{s.city}</div><div>{s.kcs}</div></>
-            )}
-          </div>
-
-          {filtered.length === 0 ? (
-            <div style={{ padding:"60px 24px", textAlign:"center", color:C.textSoft, fontSize:14 }}>
-              {s.noResults}
-            </div>
-          ) : (
-            filtered.map(d => (
-              <DocRow key={d.id} doc={d} lang={lang} s={s} rtl={rtl} />
-            ))
-          )}
-        </main>
-      </div>
+    <div style={{ marginBottom: 8 }}>
+      <button
+        onClick={() => setOpen((p) => !p)}
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "none",
+          border: "none",
+          padding: "6px 12px",
+          fontSize: 11,
+          fontWeight: 500,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          color: "var(--color-text-secondary)",
+          cursor: "pointer",
+        }}
+      >
+        {title}
+        <span style={{ fontSize: 10 }}>{open ? "▴" : "▾"}</span>
+      </button>
+      {open && children}
     </div>
   );
 }
 
-/* ─── Lang button (extracted to avoid inline hover issues) ────────────────── */
-function LangBtn({ label, onClick }) {
-  const [hover, setHover] = useState(false);
+// ── Main App ─────────────────────────────────────────────────────────────────
+export default function YaHakeem() {
+  const [lang, setLang] = useState("en");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [activeSpecialty, setActiveSpecialty] = useState(null);
+  const [activeClinic, setActiveClinic] = useState(null);
+
+  const isRtl = lang === "ku";
+  const strings = t[lang];
+
+  const filtered = useMemo(() => {
+    return doctors.filter((d) => {
+      const q = search.toLowerCase();
+      const matchesSearch =
+        !q ||
+        d.name.includes(q) ||
+        d.specialty_ku.includes(q) ||
+        (d.specialty_en && d.specialty_en.toLowerCase().includes(q)) ||
+        d.clinic.includes(q) ||
+        d.city.includes(q);
+      const matchesSpecialty =
+        !activeSpecialty ||
+        d.specialty_ku === activeSpecialty ||
+        d.specialty_en === activeSpecialty;
+      const matchesClinic = !activeClinic || d.clinic === activeClinic;
+      return matchesSearch && matchesSpecialty && matchesClinic;
+    });
+  }, [search, activeSpecialty, activeClinic]);
+
+  const sidebarContent = (
+    <div style={{ overflowY: "auto", flex: 1, paddingTop: 8 }}>
+      <SidebarGroup title={strings.specialties}>
+        <button
+          onClick={() => setActiveSpecialty(null)}
+          style={{
+            width: "100%",
+            textAlign: isRtl ? "right" : "left",
+            padding: "5px 12px",
+            fontSize: 13,
+            background: !activeSpecialty ? "var(--color-background-info)" : "none",
+            color: !activeSpecialty ? "var(--color-text-info)" : "var(--color-text-primary)",
+            border: "none",
+            cursor: "pointer",
+            borderRadius: 4,
+          }}
+        >
+          {strings.allSpecialties}
+        </button>
+        {specialties.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => { setActiveSpecialty(s.ku); setMobileOpen(false); }}
+            style={{
+              width: "100%",
+              textAlign: isRtl ? "right" : "left",
+              padding: "5px 12px",
+              fontSize: 13,
+              background: activeSpecialty === s.ku ? "var(--color-background-info)" : "none",
+              color: activeSpecialty === s.ku ? "var(--color-text-info)" : "var(--color-text-primary)",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: 4,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {lang === "ku" ? s.ku : s.en}
+          </button>
+        ))}
+      </SidebarGroup>
+
+      <SidebarGroup title={strings.clinics}>
+        <button
+          onClick={() => setActiveClinic(null)}
+          style={{
+            width: "100%",
+            textAlign: isRtl ? "right" : "left",
+            padding: "5px 12px",
+            fontSize: 13,
+            background: !activeClinic ? "var(--color-background-info)" : "none",
+            color: !activeClinic ? "var(--color-text-info)" : "var(--color-text-primary)",
+            border: "none",
+            cursor: "pointer",
+            borderRadius: 4,
+          }}
+        >
+          {strings.allClinics}
+        </button>
+        {clinics.map((c) => (
+          <button
+            key={c}
+            onClick={() => { setActiveClinic(c); setMobileOpen(false); }}
+            style={{
+              width: "100%",
+              textAlign: isRtl ? "right" : "left",
+              padding: "5px 12px",
+              fontSize: 13,
+              background: activeClinic === c ? "var(--color-background-info)" : "none",
+              color: activeClinic === c ? "var(--color-text-info)" : "var(--color-text-primary)",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: 4,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {c}
+          </button>
+        ))}
+      </SidebarGroup>
+    </div>
+  );
+
   return (
-    <button onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+    <div
+      dir={isRtl ? "rtl" : "ltr"}
       style={{
-        padding:"5px 13px", fontSize:12, fontWeight:600,
-        border:`1px solid ${C.teal}`, borderRadius:7,
-        background: hover ? C.teal : "none",
-        color: hover ? "#fff" : C.teal,
-        cursor:"pointer", whiteSpace:"nowrap",
-        transition:"background 0.15s, color 0.15s",
-      }}>
-      {label}
-    </button>
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        fontFamily: "var(--font-sans)",
+        background: "var(--color-background-tertiary)",
+        position: "relative",
+      }}
+    >
+      {/* ── Navbar ── */}
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "0 16px",
+          height: 52,
+          background: "var(--color-background-primary)",
+          borderBottom: "0.5px solid var(--color-border-tertiary)",
+          flexShrink: 0,
+          zIndex: 30,
+        }}
+      >
+        {/* Hamburger (mobile) */}
+        <button
+          onClick={() => setMobileOpen((p) => !p)}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+          }}
+          aria-label="Menu"
+        >
+          <span style={{ display: "block", width: 18, height: 1.5, background: "var(--color-text-secondary)", borderRadius: 1 }} />
+          <span style={{ display: "block", width: 18, height: 1.5, background: "var(--color-text-secondary)", borderRadius: 1 }} />
+          <span style={{ display: "block", width: 18, height: 1.5, background: "var(--color-text-secondary)", borderRadius: 1 }} />
+        </button>
+
+        {/* Brand */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 500,
+              color: "#0f766e",
+              letterSpacing: isRtl ? "0" : "-0.02em",
+            }}
+          >
+            {strings.brand}
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              color: "var(--color-text-secondary)",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {strings.tagline}
+          </span>
+        </div>
+
+        {/* Search */}
+        <div style={{ flex: 1, maxWidth: 420, margin: "0 8px" }}>
+          <input
+            type="text"
+            placeholder={strings.search}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            dir={isRtl ? "rtl" : "ltr"}
+            style={{
+              width: "100%",
+              height: 32,
+              padding: "0 10px",
+              fontSize: 13,
+              border: "0.5px solid var(--color-border-secondary)",
+              borderRadius: "var(--border-radius-md)",
+              background: "var(--color-background-secondary)",
+              color: "var(--color-text-primary)",
+              outline: "none",
+            }}
+          />
+        </div>
+
+        {/* Result count */}
+        <span style={{ fontSize: 12, color: "var(--color-text-secondary)", whiteSpace: "nowrap" }}>
+          {filtered.length} {strings.doctors}
+        </span>
+
+        {/* Language toggle */}
+        <button
+          onClick={() => setLang((l) => (l === "en" ? "ku" : "en"))}
+          style={{
+            padding: "4px 12px",
+            fontSize: 12,
+            fontWeight: 500,
+            border: "0.5px solid var(--color-border-secondary)",
+            borderRadius: "var(--border-radius-md)",
+            background: "none",
+            color: "var(--color-text-primary)",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {strings.toggleLang}
+        </button>
+      </header>
+
+      {/* ── Body ── */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden", position: "relative" }}>
+
+        {/* Mobile overlay */}
+        {mobileOpen && (
+          <div
+            onClick={() => setMobileOpen(false)}
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.35)",
+              zIndex: 20,
+            }}
+          />
+        )}
+
+        {/* Sidebar */}
+        <aside
+          style={{
+            width: 220,
+            flexShrink: 0,
+            background: "var(--color-background-primary)",
+            borderRight: isRtl ? "none" : "0.5px solid var(--color-border-tertiary)",
+            borderLeft: isRtl ? "0.5px solid var(--color-border-tertiary)" : "none",
+            display: "flex",
+            flexDirection: "column",
+            overflowY: "hidden",
+            zIndex: 25,
+            // Mobile: slide in/out
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: isRtl ? "auto" : (mobileOpen ? 0 : -220),
+            right: isRtl ? (mobileOpen ? 0 : -220) : "auto",
+            transition: "left 0.22s ease, right 0.22s ease",
+            // Desktop: static layout
+          }}
+          className="ya-sidebar"
+        >
+          <div
+            style={{
+              padding: "10px 12px 6px",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--color-text-secondary)",
+              borderBottom: "0.5px solid var(--color-border-tertiary)",
+              letterSpacing: "0.03em",
+            }}
+          >
+            {strings.specialties} & {strings.clinics}
+          </div>
+          {sidebarContent}
+        </aside>
+
+        {/* Main content */}
+        <main
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            background: "var(--color-background-primary)",
+            marginLeft: isRtl ? 0 : 220,
+            marginRight: isRtl ? 220 : 0,
+          }}
+        >
+          {/* Table header */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "40px 1fr 160px 120px 60px",
+              gap: 12,
+              padding: "8px 16px",
+              fontSize: 11,
+              fontWeight: 500,
+              color: "var(--color-text-secondary)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              borderBottom: "0.5px solid var(--color-border-tertiary)",
+              background: "var(--color-background-secondary)",
+              position: "sticky",
+              top: 0,
+              zIndex: 5,
+            }}
+          >
+            <div />
+            <div>{strings.doctor}</div>
+            <div>{strings.specialty}</div>
+            <div>{strings.city}</div>
+            <div>{strings.kcs}</div>
+          </div>
+
+          {/* Rows */}
+          {filtered.length === 0 ? (
+            <div
+              style={{
+                padding: "48px 24px",
+                textAlign: "center",
+                color: "var(--color-text-secondary)",
+                fontSize: 14,
+              }}
+            >
+              No results found.
+            </div>
+          ) : (
+            filtered.map((d) => (
+              <DoctorRow
+                key={d.id}
+                doctor={d}
+                lang={lang}
+                strings={strings}
+                isRtl={isRtl}
+              />
+            ))
+          )}
+        </main>
+      </div>
+
+      {/* ── Responsive style injection ── */}
+      <style>{`
+        @media (min-width: 768px) {
+          .ya-sidebar {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            transition: none !important;
+          }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        button:hover { background: var(--color-background-secondary) !important; }
+        input:focus { box-shadow: 0 0 0 2px var(--color-border-info) !important; }
+      `}</style>
+    </div>
   );
 }
